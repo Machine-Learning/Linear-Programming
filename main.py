@@ -1,4 +1,5 @@
 import numpy as np
+import cvxpy as cp
 import sys
 import os
 
@@ -22,10 +23,11 @@ all_states=[]
 all_states.append('D')
 all_states.append('R')
 
-max_mat = 2
-max_arrow = 3
+max_mat = 3
+max_arrow = 4
 E_left = 0
-max_health = 4
+max_health = 5
+total_states = 600
 
 #Reward for each action
 action_reward = {
@@ -38,7 +40,7 @@ action_reward = {
     'HIT': -10,
     'CRAFT': -10,
     'GATHER': -10,
-    'NONE': -10
+    'NONE': 0
 }
 
 #Define rewards for all states
@@ -48,14 +50,14 @@ for s in all_pos:
 
 #Dictionnary of possible actions. We have two "end" states (1,2 and 2,2)
 actions = {
-    'W':('RIGHT', 'STAY', 'SHOOT', 'NONE'), 
-    'N':('DOWN', 'STAY', 'CRAFT', 'NONE'),
-    'E':('LEFT', 'STAY', 'SHOOT', 'HIT', 'NONE'),
-    'S':('UP', 'STAY', 'GATHER', 'NONE'),
-    'C':('UP', 'DOWN', 'LEFT', 'RIGHT', 'STAY', 'SHOOT', 'HIT', 'NONE')
+    'W':('RIGHT', 'STAY', 'SHOOT'), 
+    'N':('DOWN', 'STAY', 'CRAFT'),
+    'E':('LEFT', 'STAY', 'SHOOT', 'HIT'),
+    'S':('UP', 'STAY', 'GATHER'),
+    'C':('UP', 'DOWN', 'LEFT', 'RIGHT', 'STAY', 'SHOOT', 'HIT')
     }
 
-#Dictionary for integer mapping of pos of IJ
+#Dictionary for integer of pos of IJ
 pos_map = {
     'W' : 0,
     'N' : 1,
@@ -117,6 +119,8 @@ for s in all_pos:
     else:
         fail[s] = 'E'
 print(fail)
+
+# convert tuple to number
 def tupletonum(p,m,a,s,h):
     num = p*120 + m*40 + a*10 + s*5 + h
     return num
@@ -132,8 +136,8 @@ def numtotuple(num):
 
 def prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1):
     if a == 'UP':
-        if m!=m1 or arr!=arr1 or s!=s1 or h!=h1:
-            return 0
+        # if m!=m1 or arr!=arr1 or h!=h1:
+        #     return 0
         if p == 'S':
             if p1 == 'C':
                 return probability[p]
@@ -151,8 +155,8 @@ def prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1):
         else:
             return 0
     elif a == 'DOWN':
-        if m!=m1 or arr!=arr1 or s!=s1 or h!=h1:
-            return 0
+        # if m!=m1 or arr!=arr1 or s!=s1 or h!=h1:
+        #     return 0
         if p == 'N':
             if p1 == 'C':
                 return probability[p]
@@ -170,8 +174,8 @@ def prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1):
         else:
             return 0
     elif a == 'LEFT':
-        if m!=m1 or arr!=arr1 or s!=s1 or h!=h1:
-            return 0
+        # if m!=m1 or arr!=arr1 or s!=s1 or h!=h1:
+        #     return 0
         if p == 'E':
             if p1 == 'C' or (p1 == 'W' and E_left == 1):
                 return probability[p]
@@ -189,8 +193,8 @@ def prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1):
         else:
             return 0
     elif a == 'RIGHT':
-        if m!=m1 or arr!=arr1 or s!=s1 or h!=h1:
-            return 0
+        # if m!=m1 or arr!=arr1 or s!=s1 or h!=h1:
+        #     return 0
         if p == 'W':
             if p1 == 'C':
                 return probability[p]
@@ -208,8 +212,8 @@ def prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1):
         else:
             return 0
     elif a == 'STAY':
-        if m!=m1 or arr!=arr1 or s!=s1 or h!=h1:
-            return 0
+        # if m!=m1 or arr!=arr1 or s!=s1 or h!=h1:
+        #     return 0
         if p1 == p:
             return probability[p]
         elif p1 == fail[p]:
@@ -218,7 +222,9 @@ def prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1):
             return 0
         
     elif a == 'SHOOT':
-        if p!=p1 or m!=m1 or s!=s1:
+        # if p!=p1 or m!=m1 or s!=s1:
+        #     return 0
+        if p!=p1 or m != m1:
             return 0
         if arr == arr1+1 and (p == 'C' or p == 'E' or p == 'W'):
             if p == 'C':
@@ -246,7 +252,9 @@ def prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1):
             return 0
         
     elif a == 'HIT':
-        if p!=p1 or m!=m1 or s!=s1 or arr!=arr1:
+        # if p!=p1 or m!=m1 or s!=s1 or arr!=arr1:
+        #     return 0
+        if p!=p1 or m!=m1:
             return 0
         if p == 'C':
             if h == h1+2:
@@ -266,7 +274,9 @@ def prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1):
             return 0
         
     elif a == 'CRAFT':
-        if p!=p1 or s!=s1 or h!=h1:
+        # if p!=p1 or s!=s1 or h!=h1:
+        #     return 0
+        if p!=p1 or h!=h1:
             return 0
         if p == 'N' and m>=1 and m == m1+1:
             if arr+1 == arr1:
@@ -281,7 +291,9 @@ def prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1):
             return 0
         
     elif a == 'GATHER':
-        if p!=p1 or s!=s1 or h!=h1 or arr!=arr1:
+        # if p!=p1 or s!=s1 or h!=h1 or arr!=arr1:
+        #     return 0
+        if p!=p1 or h!=h1 or arr!=arr1:
             return 0
         if p == 'S' and m<=1:
             if m+1 == m1:
@@ -293,12 +305,16 @@ def prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1):
         else:
             return 0
     
-    elif a == 'NONE':
+    elif(a == 'NONE'):
         return 0
+
 r = []
-a = []
-col = 0
+A = []
+temp_x = []
+policy = []
 actions_list = []
+col = 0
+flag = 0
 for p in all_pos:
     for m in range(0,max_mat):
         for arr in range(0,max_arrow):
@@ -307,34 +323,108 @@ for p in all_pos:
                     num_p = pos_map[p]
                     num_s = state_map[s]
                     act = []
+                    column = []
+                    # column = [] ---> 
+                    if( h == 0 ):
+                        for i in range(0,total_states):
+                            (p1,m1,arr1,s1,h1) = numtotuple(i)
+                            if(p!=p1 and m!=m1 and arr!=arr1 and s!=s1 and h!=h1):
+                                column.append(0)
+                            else:
+                                column.append(1)
+                        r.append(0)
+                        col+=1
+                        A.append(column)
+                        continue
                     for a in actions[p]:
-                        if a == 'SHOOT' and arr == 0:
+                        if(h == 0):
+                            pass
+                        elif a == 'SHOOT' and arr == 0:
                             continue
-                        elif a == 'CRAFT' and (m == 0 or arr == 3):
+                        elif a == 'CRAFT' and (m == 0):
                             continue
-                        elif a == 'GATHER' and m == 2:
-                            continue
+                        # noop condition
                         if(not h):
                             r.append(0)
                             # if unsuccessful add -40 (doubt here i.e. how to add)
-                        else: 
+                        else:
                             r.append(action_reward[a])
                         col+=1
+                        column.clear()
                         # column since later will take transpose to change to required A matrix
-                        column = []
                         act.append(a)
-                        add_prob = 0
                         for p1 in all_pos:
                             for m1 in range(0,max_mat):
                                 for arr1 in range(0,max_arrow):
                                     for s1 in all_states:
                                         for h1 in range(0,max_health):
-                                            if(p!=p1 and m!=m1 and arr!=arr1 and s!=s1 and h!=h1):
-                                                pr = round(prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1),5)
-                                                add_prob += pr
+                                            if(p!=p1 or m!=m1 or arr!=arr1 or s!=s1 or h!=h1):
+                                                pr = round(prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1),4)
                                                 column.append(-pr)
-                        a.append(column)
+                                                # if(pr != 0):
+                                                #     print(pr)
+                                            else:
+                                                column.append(0)
+                        type = sum(column)
+                        # print(type)
+                        column[tupletonum(pos_map[p],m,arr,state_map[s],h)] = -type
+                        A.append(column)
+                    if(flag == 0):
+                        flag= 1
+                        for i in column:
+                            print(i)
                     actions_list.append(act)
 
-print("len r : " + str(len(r)))
-print(r)
+# print("len r : " + str(len(r)))
+# print(r)
+
+r = np.array(r)
+r.shape = (1,-1)
+A = np.array(A)
+# transpose of A
+A = np.transpose(A)
+alpha = [0 for i in range(0,total_states)]
+alpha[tupletonum(pos_map['W'],0,0,state_map['D'],0)] = 1
+alpha = np.array(alpha)
+alpha.shape = (total_states,1)
+
+# final_dict = {
+    # "a"         : "Empty",
+    # "r"         : "Empty",
+    # "alpha"     : "Empty",
+    # "x"         : "Empty",
+    # "policy"    : "Empty",
+    # "objective" : "Empty",
+# }
+
+# update some values in final dictionary
+final_dict['a'] = A.tolist()
+final_dict['r'] = r.tolist()
+final_dict['alpha'] = alpha.tolist()
+
+# Linear Programming
+x = cp.Variable(shape=(col,1), name="x",nonneg=True)
+
+# print("r : " + str(r.shape))
+# print("A : " + str(A.shape))
+# print("x : " + str(x.shape))
+# print("alpha : " + str(alpha.shape))
+
+constraints = [cp.matmul(A, x) == alpha]
+objective = cp.Maximize(cp.matmul(r,x))
+problem = cp.Problem(objective, constraints)
+solution = problem.solve()
+
+# print(problem.value)
+
+# for getting values of x
+
+for i in x.value:
+    temp_x.append(i[0])
+
+final_dict['objective'] = solution
+final_dict['x'] = temp_x
+
+# index,st = 0,0
+
+# for a in all_pos:
