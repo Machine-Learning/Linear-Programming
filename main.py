@@ -2,6 +2,7 @@ import numpy as np
 import cvxpy as cp
 import sys
 import os
+import json
 
 MINM = -100000000
 
@@ -128,8 +129,8 @@ def numtotuple(num):
     h = num%5
     s = (int(num/5))%2
     a = (int((int(num/5))/2))%4
-    m = (int(int((int(num/5))/2))/4)%3
-    p = (int((int(int((int(num/5))/2))/4)/3))%5
+    m = (int((int((int(num/5))/2))/4))%3
+    p = (int((int((int((int(num/5))/2))/4))/3))%5
     return (p,m,a,s,h)
 
 def prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1):
@@ -385,7 +386,8 @@ policy = []
 col = 0
 flag = 0
 
-prev_state = np.zeros((len(all_pos),max_mat,max_arrow,len(all_states),max_health), dtype=list)
+# prev_state = np.zeros((len(all_pos),max_mat,max_arrow,len(all_states),max_health), dtype=object)
+# prev_state = [[[[[[] for i in range(max_health)] for i in range(len(all_states))] for i in range(max_arrow)] for i in range(max_mat)] for i in range(len(all_pos))]
 
 for p in all_pos:
     for m in range(0,max_mat):
@@ -400,7 +402,7 @@ for p in all_pos:
                     if( h == 0 ):
                         for i in range(0,total_states):
                             (p1,m1,arr1,s1,h1) = numtotuple(i)
-                            if(p!=p1 or m!=m1 or arr!=arr1 or s!=s1 or h!=h1):
+                            if(pos_map[p]!=p1 or m!=m1 or arr!=arr1 or state_map[s]!=s1 or h!=h1):
                                 column.append(0)
                             else:
                                 column.append(1)
@@ -426,9 +428,9 @@ for p in all_pos:
                                         for h1 in range(0,max_health):
                                             if(p!=p1 or m!=m1 or arr!=arr1 or s!=s1 or h!=h1):
                                                 pr = round(prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1),4)
-                                                if pr > 1e-8:
-                                                    prev_state[pos_map[p1],m1,arr1,state_map[s1],h1].append([p,m,arr1,s1,h1])
-                                                column.append(pr)
+                                                column.append(-pr)
+                                                if s == 'R' and s1 == 'D' and (p == 'E' or p == 'C') and ((h+1)==h1 or (h==4 and h1==4)) and arr1==0 and m==m1:
+                                                    tmp[-1] -= 40*pr
                                                 # if(pr != 0):
                                                 #     print(pr)
                                             else:
@@ -443,24 +445,50 @@ for p in all_pos:
                     #     for i in column:
                     #         print(i)
 
+# print(r)
+# r_prev = r
+# for p in all_pos:
+#     for m in range(0,max_mat):
+#         for arr in range(0,max_arrow):
+#             for s in all_states:
+#                 for h in range(0,max_health):
+#                     num_p = pos_map[p]
+#                     num_s = state_map[s]
+#                     val = tupletonum(pos_map[p],m,arr,state_map[s],h)
+#                     # print(val)
+#                     rew = r[val][0]
+#                     # print('Len = ',len(prev_state[num_p][m][arr][num_s][h]))
+#                     for i in range(len(prev_state[num_p][m][arr][num_s][h])):
+#                         j = prev_state[num_p][m][arr][num_s][h][i]
+#                         # print('PREV state: ',j,end='; ')
+#                         # print('\t',i)
+#                         # print('Final state: ',p,m,arr,s,h)
+#                         if j[3] == 'R' and s == 'D' and (j[0] == 'E' or j[0] == 'C') and ((j[4]+1)==h or (j[4]==4 and h==4)) and arr==0 and j[1]==m:
+#                             # print('Initial',r[val][i],end=' ')
+#                             rew -= 40*0.5
+#                             # print('Final', r[val][i])
+#                         # if s == 'R' and s1 == 'D' and (p == 'E' or p == 'C') and ((h+1)==h1 or (h==4 and h1==4)) and arr1==0 and m==m1:
+#                     for i in range(len(r[val])):
+#                         r[val][i] = rew
+
+# print(r)
+# if r_prev == r:
+#     print("EQUAL vectors")
+
+
+# Opening JSON file
+with open('part_3_output.json') as json_file:
+    data = json.load(json_file)
+# cnt = 0
+# j = 0
+# for i in range(len(r)):
+#     for j in range(len(r[i])):
+#         print('i=',cnt,'; Our: ',r[i][j],', Their: ',data['r'][cnt])
+#         if data['r'][cnt] != r[i][j]:
+#             print(numtotuple(i))
+#         cnt += 1
+        
 r_final = []
-for p in all_pos:
-    for m in range(0,max_mat):
-        for arr in range(0,max_arrow):
-            for s in all_states:
-                for h in range(0,max_health):
-                    # num_p = pos_map[p]
-                    # num_s = state_map[s]
-                    val = tupletonum(pos_map[p],m,arr,state_map[s],h)
-                    # rew = r[val][0]
-                    for i in range(prev_state[num_p,m,arr,num_s,h]):
-                        j = prev_state[num_p,m,arr,num_s,h][i]
-                        if j[3] == 'R' and s == 'D' and (j[0] == 'E' or j[0] == 'C') and ((j[4]+1)==h or (j[4]==4 and h==4)) and arr==0 and j[1]==m:
-                            r[val][i] -= 40*0.5
-                        # if s == 'R' and s1 == 'D' and (p == 'E' or p == 'C') and ((h+1)==h1 or (h==4 and h1==4)) and arr1==0 and m==m1:
-
-print(r)
-
 for i in range(len(r)):
     for j in range(len(r[i])):
         r_final.append(r[i][j])
@@ -469,21 +497,28 @@ r.shape = (1,-1)
 
 # for i in r.tolist():
 #     print(i)
+  
+    # Print the type of data variable
+    # print("Type:", type(data))
+  
+    # Print the data of dictionary
+    # print("\nR:", data['r'])
+    # print("\nPeople2:", data['people2'])
+
+        # break
 
 A = np.array(A)
 # transpose of A
-A = np.transpose(A)
-
-for i in range(A.shape[0]):
-    for j in range(A.shape[1]):
-        if A[i][j] > 0:
-            A[j][i] = -A[i][j]
-
+data['a'] = np.array(data['a'])
+data['a'] = np.transpose(data['a'])
 print("A : ")
 for i in range(A.shape[0]):
     for j in range(A.shape[1]):
-        print(A[i][j],end=', ')
+        print('i=',i,',j=',j,', OUR: ',A[i][j],'Their: ',data['a'][i][j])
+        if A[i][j] != data['a'][i][j]:
+            print("DIFF, INI: ",numtotuple(i))
     print()
+A = np.transpose(A)
 
 alpha = [0 for i in range(0,total_states)]
 alpha[tupletonum(pos_map['W'],0,0,state_map['D'],0)] = 1
@@ -505,14 +540,14 @@ final_dict['r'] = r_final
 final_dict['alpha'] = alpha.tolist()
 
 # Linear Programming
-x = cp.Variable(shape=(col,1), name="x",nonneg=True)
+x = cp.Variable(shape=(col,1), name="x")
 
 # print("r : " + str(r.shape))
 # print("A : " + str(A.shape))
 # print("x : " + str(x.shape))
 # print("alpha : " + str(alpha.shape))
 
-constraints = [cp.matmul(A, x) == alpha]
+constraints = [cp.matmul(A, x) == alpha, x>=0]
 objective = cp.Maximize(cp.matmul(r,x))
 problem = cp.Problem(objective, constraints)
 solution = problem.solve()
