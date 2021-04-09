@@ -384,6 +384,9 @@ temp_x = []
 policy = []
 col = 0
 flag = 0
+
+prev_state = np.zeros((len(all_pos),max_mat,max_arrow,len(all_states),max_health), dtype=list)
+
 for p in all_pos:
     for m in range(0,max_mat):
         for arr in range(0,max_arrow):
@@ -421,14 +424,16 @@ for p in all_pos:
                                         for h1 in range(0,max_health):
                                             if(p!=p1 or m!=m1 or arr!=arr1 or s!=s1 or h!=h1):
                                                 pr = round(prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1),4)
+                                                if pr > 1e-8:
+                                                    prev_state[pos_map[p1],m1,arr1,state_map[s1],h1].append([p,m,arr1,s1,h1])
                                                 column.append(-pr)
                                                 # if(pr != 0):
                                                 #     print(pr)
                                             else:
                                                 column.append(0)
-                        type = sum(column)
-                        # print(type)
-                        column[tupletonum(pos_map[p],m,arr,state_map[s],h)] = -type
+                        type_col = sum(column)
+                        # print(type_col)
+                        column[tupletonum(pos_map[p],m,arr,state_map[s],h)] = -type_col
                         A.append(column)
                     # if(flag == 0):
                     #     flag= 1
@@ -438,12 +443,28 @@ for p in all_pos:
 r = np.array(r)
 r.shape = (1,-1)
 
+for p in all_pos:
+    for m in range(0,max_mat):
+        for arr in range(0,max_arrow):
+            for s in all_states:
+                for h in range(0,max_health):
+                    num_p = pos_map[p]
+                    num_s = state_map[s]
+                    r = 0
+                    for j in range(prev_state[num_p,m,arr,num_s,h]):
+                        if j == []
+
 for i in r.tolist():
     print(i)
 
 A = np.array(A)
 # transpose of A
 A = np.transpose(A)
+
+for i range(A.shape[0]):
+    for j in range(A.shape[1]):
+        if A[i][j] > 0:
+            A[j][i] = -A[i][j]
 
 alpha = [0 for i in range(0,total_states)]
 alpha[tupletonum(pos_map['W'],0,0,state_map['D'],0)] = 1
