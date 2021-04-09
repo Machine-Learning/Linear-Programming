@@ -395,15 +395,17 @@ for p in all_pos:
                     num_p = pos_map[p]
                     num_s = state_map[s]
                     column = []
+                    tmp = []
                     # column = [] ---> 
                     if( h == 0 ):
                         for i in range(0,total_states):
                             (p1,m1,arr1,s1,h1) = numtotuple(i)
-                            if(p!=p1 and m!=m1 and arr!=arr1 and s!=s1 and h!=h1):
+                            if(p!=p1 or m!=m1 or arr!=arr1 or s!=s1 or h!=h1):
                                 column.append(0)
                             else:
                                 column.append(1)
-                        r.append(0)
+                        tmp.append(0)
+                        r.append(tmp)
                         col+=1
                         A.append(column)
                         continue
@@ -413,7 +415,7 @@ for p in all_pos:
                         elif a == 'CRAFT' and (m == 0):
                             continue
                         # if unsuccessful add -40 (doubt here i.e. how to add)
-                        r.append(STEP_COST)
+                        tmp.append(STEP_COST)
                         col+=1
                         column.clear()
                         # column since later will take transpose to change to required A matrix
@@ -426,7 +428,7 @@ for p in all_pos:
                                                 pr = round(prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1),4)
                                                 if pr > 1e-8:
                                                     prev_state[pos_map[p1],m1,arr1,state_map[s1],h1].append([p,m,arr1,s1,h1])
-                                                column.append(-pr)
+                                                column.append(pr)
                                                 # if(pr != 0):
                                                 #     print(pr)
                                             else:
@@ -435,36 +437,53 @@ for p in all_pos:
                         # print(type_col)
                         column[tupletonum(pos_map[p],m,arr,state_map[s],h)] = -type_col
                         A.append(column)
+                    r.append(tmp)
                     # if(flag == 0):
                     #     flag= 1
                     #     for i in column:
                     #         print(i)
 
-r = np.array(r)
-r.shape = (1,-1)
-
+r_final = []
 for p in all_pos:
     for m in range(0,max_mat):
         for arr in range(0,max_arrow):
             for s in all_states:
                 for h in range(0,max_health):
-                    num_p = pos_map[p]
-                    num_s = state_map[s]
-                    r = 0
-                    for j in range(prev_state[num_p,m,arr,num_s,h]):
-                        if j == []
+                    # num_p = pos_map[p]
+                    # num_s = state_map[s]
+                    val = tupletonum(pos_map[p],m,arr,state_map[s],h)
+                    # rew = r[val][0]
+                    for i in range(prev_state[num_p,m,arr,num_s,h]):
+                        j = prev_state[num_p,m,arr,num_s,h][i]
+                        if j[3] == 'R' and s == 'D' and (j[0] == 'E' or j[0] == 'C') and ((j[4]+1)==h or (j[4]==4 and h==4)) and arr==0 and j[1]==m:
+                            r[val][i] -= 40*0.5
+                        # if s == 'R' and s1 == 'D' and (p == 'E' or p == 'C') and ((h+1)==h1 or (h==4 and h1==4)) and arr1==0 and m==m1:
 
-for i in r.tolist():
-    print(i)
+print(r)
+
+for i in range(len(r)):
+    for j in range(len(r[i])):
+        r_final.append(r[i][j])
+r = np.array(r_final)
+r.shape = (1,-1)
+
+# for i in r.tolist():
+#     print(i)
 
 A = np.array(A)
 # transpose of A
 A = np.transpose(A)
 
-for i range(A.shape[0]):
+for i in range(A.shape[0]):
     for j in range(A.shape[1]):
         if A[i][j] > 0:
             A[j][i] = -A[i][j]
+
+print("A : ")
+for i in range(A.shape[0]):
+    for j in range(A.shape[1]):
+        print(A[i][j],end=', ')
+    print()
 
 alpha = [0 for i in range(0,total_states)]
 alpha[tupletonum(pos_map['W'],0,0,state_map['D'],0)] = 1
@@ -482,7 +501,7 @@ alpha.shape = (total_states,1)
 
 # update some values in final dictionary
 final_dict['a'] = A.tolist()
-final_dict['r'] = r.tolist()
+final_dict['r'] = r_final
 final_dict['alpha'] = alpha.tolist()
 
 # Linear Programming
