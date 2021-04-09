@@ -379,4 +379,4 @@ def prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1):
     elif a == 'NONE':
         return 0
     
-print(prob('HIT','C',0,0,'D',1,'C',0,0,'R',1))
+print(prob('UP','C',0,0,'D',2,'C',0,0,'R',1))

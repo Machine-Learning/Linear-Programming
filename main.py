@@ -26,7 +26,7 @@ all_states.append('R')
 max_mat = 3
 max_arrow = 4
 max_health = 5
-STEP_COST = -10
+STEP_COST = -5
 total_states = 600
 
 #Reward for each action
@@ -484,16 +484,16 @@ for p in all_pos:
 
 
 # Opening JSON file
-with open('part_3_output.json') as json_file:
+with open('part_3_output0.json') as json_file:
     data = json.load(json_file)
-# cnt = 0
-# j = 0
-# for i in range(len(r)):
-#     for j in range(len(r[i])):
-#         print('i=',cnt,'; Our: ',r[i][j],', Their: ',data['r'][cnt])
-#         if data['r'][cnt] != r[i][j]:
-#             print(numtotuple(i))
-#         cnt += 1
+cnt = 0
+j = 0
+for i in range(len(r)):
+    for j in range(len(r[i])):
+        print('i=',cnt,'; Our: ',r[i][j],', Their: ',data['r'][cnt])
+        if data['r'][cnt] != r[i][j]:
+            print("NA",numtotuple(i))
+        cnt += 1
         
 r_final = []
 for i in range(len(r)):
