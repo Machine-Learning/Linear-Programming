@@ -26,7 +26,7 @@ all_states.append('R')
 max_mat = 3
 max_arrow = 4
 max_health = 5
-STEP_COST = -20
+STEP_COST = -10
 total_states = 600
 
 #Reward for each action
@@ -50,11 +50,11 @@ for s in all_pos:
 
 #Dictionnary of possible actions. We have two "end" states (1,2 and 2,2)
 actions = {
-    'W':('RIGHT', 'STAY', 'SHOOT'), 
-    'N':('DOWN', 'STAY', 'CRAFT'),
-    'E':('LEFT', 'STAY', 'SHOOT', 'HIT'),
+    'W':('STAY', 'RIGHT', 'SHOOT'), 
+    'N':('STAY', 'DOWN', 'CRAFT'),
+    'E':('STAY', 'LEFT', 'SHOOT', 'HIT'),
     'S':('UP', 'STAY', 'GATHER'),
-    'C':('UP', 'DOWN', 'LEFT', 'RIGHT', 'STAY', 'SHOOT', 'HIT')
+    'C':('STAY', 'UP', 'DOWN', 'RIGHT', 'LEFT', 'SHOOT', 'HIT')
     }
 
 #Dictionary for integer mapping of pos of IJ
@@ -409,8 +409,10 @@ for p in all_pos:
                         tmp.append(0)
                         r.append(tmp)
                         col+=1
+                        # print(column)
                         A.append(column)
                         continue
+                    # print('Initial state: ',p,m,arr,s,h)
                     for a in actions[p]:
                         if a == 'SHOOT' and arr == 0:
                             continue
@@ -419,7 +421,8 @@ for p in all_pos:
                         # if unsuccessful add -40 (doubt here i.e. how to add)
                         tmp.append(STEP_COST)
                         col+=1
-                        column.clear()
+                        column = []
+                        # print('\tAction: ',a)
                         # column since later will take transpose to change to required A matrix
                         for p1 in all_pos:
                             for m1 in range(0,max_mat):
@@ -427,7 +430,8 @@ for p in all_pos:
                                     for s1 in all_states:
                                         for h1 in range(0,max_health):
                                             if(p!=p1 or m!=m1 or arr!=arr1 or s!=s1 or h!=h1):
-                                                pr = round(prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1),4)
+                                                pr = prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1)
+                                                # print('\t\tFinal state: ',p1,m1,arr1,s1,h1,';\tProb: ',pr)
                                                 column.append(-pr)
                                                 if s == 'R' and s1 == 'D' and (p == 'E' or p == 'C') and ((h+1)==h1 or (h==4 and h1==4)) and arr1==0 and m==m1:
                                                     tmp[-1] -= 40*pr
@@ -438,13 +442,20 @@ for p in all_pos:
                         type_col = sum(column)
                         # print(type_col)
                         column[tupletonum(pos_map[p],m,arr,state_map[s],h)] = -type_col
+                        # print(column)
                         A.append(column)
                     r.append(tmp)
                     # if(flag == 0):
                     #     flag= 1
                     #     for i in column:
                     #         print(i)
-
+                # for i in range(len(A)):
+                #     for j in range(len(A[i])):
+                #         print(A[i][j],end=' ')
+                #     print()
+                # print('---------------------------------------------------------')
+                # exit()
+# print(A)
 # print(r)
 # r_prev = r
 # for p in all_pos:
@@ -470,10 +481,6 @@ for p in all_pos:
 #                         # if s == 'R' and s1 == 'D' and (p == 'E' or p == 'C') and ((h+1)==h1 or (h==4 and h1==4)) and arr1==0 and m==m1:
 #                     for i in range(len(r[val])):
 #                         r[val][i] = rew
-
-# print(r)
-# if r_prev == r:
-#     print("EQUAL vectors")
 
 
 # Opening JSON file
@@ -515,7 +522,7 @@ print("A : ")
 for i in range(A.shape[0]):
     for j in range(A.shape[1]):
         print('i=',i,',j=',j,', OUR: ',A[i][j],'Their: ',data['a'][i][j])
-        if A[i][j] != data['a'][i][j]:
+        if abs(A[i][j] - data['a'][i][j]) > 1e-8:
             print("DIFF, INI: ",numtotuple(i))
     print()
 A = np.transpose(A)
@@ -542,10 +549,10 @@ final_dict['alpha'] = alpha.tolist()
 # Linear Programming
 x = cp.Variable(shape=(col,1), name="x")
 
-# print("r : " + str(r.shape))
-# print("A : " + str(A.shape))
-# print("x : " + str(x.shape))
-# print("alpha : " + str(alpha.shape))
+print("r : " + str(r.shape))
+print("A : " + str(A.shape))
+print("x : " + str(x.shape))
+print("alpha : " + str(alpha.shape))
 
 constraints = [cp.matmul(A, x) == alpha, x>=0]
 objective = cp.Maximize(cp.matmul(r,x))
