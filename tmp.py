@@ -388,4 +388,43 @@ def numtotuple(num):
     p = (int((int((int((int(num/5))/2))/4))/3))%5
     return (p,m,a,s,h)
 
-# print(numtotuple(193))
+# print(numtotuple(444))
+print(numtotuple(193))
+
+infinity = 1e8
+# Positions of IJ
+W, N, E, S, C = (0, 1, 2, 3, 4)
+direction = ("West", "North", "East", "South", "Center")
+name_pos = ["W", "N", "E", "S", "C"]
+NUM_POS = 5
+
+# Material count can be 0,1,2
+MATERIAL_MAX = 3
+
+# Arrow count can be 0,1,2,3
+ARROW_MAX = 4
+
+# MM state can ve DORMANT(D), or READY(R)
+Dormant, Ready = (0, 1)
+mm_states = ("D", "R")
+MM_STATES = 2
+
+# MM health can be {0,25,50,75,100}
+mm_health = [0, 25, 50, 75, 100]
+MM_HLTH_NUM = 5
+
+DISCOUNT = 0.999
+BELLMAN_ERROR = 0.001
+STEP_COST = -5
+MMHIT_REWARD = -40
+BOSS_REWARD = 50
+
+def get_index(pos, m, a, s, h):
+    index = pos * MATERIAL_MAX * ARROW_MAX * MM_STATES * MM_HLTH_NUM
+    index += m * ARROW_MAX * MM_STATES * MM_HLTH_NUM
+    index += a * MM_STATES * MM_HLTH_NUM
+    index += s * MM_HLTH_NUM
+    index += h
+    return index
+
+print(get_index(3,2,0,0,4))

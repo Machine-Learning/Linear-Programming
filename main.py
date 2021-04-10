@@ -26,7 +26,7 @@ all_states.append('R')
 max_mat = 3
 max_arrow = 4
 max_health = 5
-STEP_COST = -5
+STEP_COST = -10
 total_states = 600
 
 #Reward for each action
@@ -99,7 +99,7 @@ final_dict = {
 policy={}
 for s in actions.keys():
     policy[s] = np.random.choice(actions[s])
-print(policy)
+# print(policy)
 
 #Define success probabilities for states
 probability = {}
@@ -108,7 +108,7 @@ for s in all_pos:
         probability[s] = 1
     else:
         probability[s] = 0.85
-print(probability)
+# print(probability)
         
 #Define fail action for states
 fail = {}
@@ -117,7 +117,7 @@ for s in all_pos:
         fail[s] = s
     else:
         fail[s] = 'E'
-print(fail)
+# print(fail)
 
 # convert tuple to number
 def tupletonum(p,m,a,s,h):
@@ -439,12 +439,12 @@ for p in all_pos:
                                                 #     print(pr)
                                             else:
                                                 column.append(0)
-                                            if (col==445):
-                                                if len(column)==153:
-                                                    print('Initial state: ',p,m,arr,s,h)
-                                                    print('\tAction: ',a)
-                                                    print('\t\tFinal state: ',p1,m1,arr1,s1,h1,';\tProb: ',pr)
-                                                    exit()
+                                            # if (col==286):
+                                            #     if len(column)==115:
+                                            #         print('Initial state: ',p,m,arr,s,h)
+                                            #         print('\tAction: ',a)
+                                            #         print('\t\tFinal state: ',p1,m1,arr1,s1,h1,';\tProb: ',pr)
+                                            #         exit()
                                                     
                         type_col = sum(column)
                         # print(type_col)
@@ -466,9 +466,9 @@ for p in all_pos:
 # print(r)
 # r_prev = r
 
-# Opening JSON file
-with open('part_3_output0.json') as json_file:
-    data = json.load(json_file)
+# # Opening JSON file
+# with open('outputs/part_3_output.json') as json_file:
+#     data = json.load(json_file)
 # cnt = 0
 # j = 0
 # for i in range(len(r)):
@@ -483,9 +483,9 @@ for i in range(len(r)):
     for j in range(len(r[i])):
         r_final.append(r[i][j])
 r = np.array(r_final)
-print(r,'\n',r.shape)
+# print(r,'\n',r.shape)
 r.shape = (1,-1)
-print(r,'\n',r.shape)
+# print(r,'\n',r.shape)
 
 # for i in r.tolist():
 #     print(i)
@@ -501,26 +501,28 @@ print(r,'\n',r.shape)
 
 A = np.array(A)
 # transpose of A
-data['a'] = np.array(data['a'])
-data['a'] = np.transpose(data['a'])
-print("A : ")
-for i in range(A.shape[0]):
-    for j in range(A.shape[1]):
-        print('i=',i,',j=',j,', OUR: ',A[i][j],'Their: ',data['a'][i][j])
-        if abs(A[i][j] - data['a'][i][j]) > 1e-8:
-            print("DIFF, INI: ",numtotuple(i))
-    print()
 A = np.transpose(A)
-ind = []
-for i in range(1936):
-    ind.append(0)
 
-def match_col(i,j):
-    for k in range(600):
-        if abs(A[k][i] - data['a'][k][j]) > 1e-8:
-            print('\t','i=',i,', j=',j,', k=',k,'our: ',A[k][i],'; their: ',data['a'][k][j])
-            return False
-    return True
+# data['a'] = np.array(data['a'])
+# data['a'] = np.transpose(data['a'])
+# print("A : ")
+# for i in range(A.shape[0]):
+#     for j in range(A.shape[1]):
+#         print('i=',i,',j=',j,', OUR: ',A[i][j],'Their: ',data['a'][i][j])
+#         if abs(A[i][j] - data['a'][i][j]) > 1e-8:
+#             print("DIFF, INI: ",numtotuple(i))
+#     print()
+
+# ind = []
+# for i in range(1936):
+#     ind.append(0)
+
+# def match_col(i,j):
+#     for k in range(600):
+#         if abs(A[k][i] - data['a'][k][j]) > 1e-8:
+#             print('\t','i=',i,', j=',j,', k=',k,'our: ',A[k][i],'; their: ',data['a'][k][j])
+#             return False
+#     return True
 
 # for i in range(1936):
 #     for j in range(1936):
@@ -556,29 +558,104 @@ final_dict['alpha'] = alpha.tolist()
 # Linear Programming
 x = cp.Variable(shape=(col,1), name="x")
 
-print("r : " + str(r.shape))
-print("A : " + str(A.shape))
-print("x : " + str(x.shape))
-print("alpha : " + str(alpha.shape))
-print('A2 : ',data['a'].shape)
-print('Obj: ',data['objective'])
+# print("r : " + str(r.shape))
+# print("A : " + str(A.shape))
+# print("x : " + str(x.shape))
+# print("alpha : " + str(alpha.shape))
+# print('A2 : ',data['a'].shape)
+# print('Obj: ',data['objective'])
 
 constraints = [cp.matmul(A, x) == alpha, x>=0]
 objective = cp.Maximize(cp.matmul(r,x))
 problem = cp.Problem(objective, constraints)
 solution = problem.solve()
 
-print(problem.status)
-print(solution)
+# print(problem.status)
+# print(solution)
 
 # for getting values of x
 
 for i in x.value:
-    temp_x.append(i[0])
-
+    temp_x.append(float(i[0]))
 final_dict['objective'] = solution
 final_dict['x'] = temp_x
+
+policy = []
+st = 0
+index=0
+
+for p in all_pos:
+    for m in range(0,max_mat):
+        for arr in range(0,max_arrow):
+            for s in all_states:
+                for h in range(0,max_health):
+                    num = index
+                    max_value = temp_x[index]
+                    action_taken = actions[p][0]
+                    allx = []
+                    if(h==0):
+                        action_taken = 'NONE'
+                        haslis = []
+                        haslis.append(p)
+                        haslis.append(m)
+                        haslis.append(arr)
+                        haslis.append(s)
+                        haslis.append(h*25)
+                        temp = []
+                        temp.append(haslis)
+                        temp.append(action_taken)
+                        policy.append(temp)
+                        num+=1
+                        index = num
+                        continue
+                    for i in actions[p]:
+                        if i == 'SHOOT' and arr == 0:
+                            continue
+                        elif i == 'CRAFT' and (m == 0):
+                            continue                        
+                        allx.append(temp_x[num])
+                        if(temp_x[num]>=max_value):
+                            max_value = temp_x[num]
+                            action_taken = i
+                        num+=1
+                    # print(num)
+                    index = num
+                    haslis = []
+                    haslis.append(p)
+                    haslis.append(m)
+                    haslis.append(arr)
+                    haslis.append(s)
+                    haslis.append(h*25)
+                    temp = []
+                    temp.append(haslis)
+                    temp.append(action_taken)
+                    policy.append(temp)
+
+final_dict['policy'] = policy
+
+# print(policy)
+
+# Dumping the JSON object into the directory
+
+original = sys.stdout
+if not os.path.exists('outputs'):
+    os.makedirs('outputs')
+
+sys.stdout = original
+
+file_object = open("outputs/part_3_output.json", 'w')
+json.dump(final_dict, file_object)
 
 # index,st = 0,0
 
 # for a in all_pos:
+
+
+# print("x : ")
+# for i in range(len(temp_x)):
+#     if abs(temp_x[i] - data['x'][i]) > 1e-8:
+#         print("DIFF x: ",i,temp_x[i],data['x'][i])
+# print("Policy : ")
+# for i in range(len(policy)):
+#     if policy[i][1] != data['policy'][i][1]:
+#         print("DIFF pol: ",i,policy[i],data['policy'][i])
