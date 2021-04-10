@@ -379,4 +379,13 @@ def prob(a,p,m,arr,s,h,p1,m1,arr1,s1,h1):
     elif a == 'NONE':
         return 0
     
-print(prob('UP','C',0,0,'D',2,'C',0,0,'R',1))
+print(prob('CRAFT','N',1,3,'D',2,'N',1,3,'R',1))
+def numtotuple(num):
+    h = num%5
+    s = (int(num/5))%2
+    a = (int((int(num/5))/2))%4
+    m = (int((int((int(num/5))/2))/4))%3
+    p = (int((int((int((int(num/5))/2))/4))/3))%5
+    return (p,m,a,s,h)
+
+# print(numtotuple(193))
