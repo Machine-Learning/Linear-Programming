@@ -12,11 +12,11 @@ GAMMA = 0.999
 
 #Define all pos
 all_pos=[]
-all_pos.append('C')
-all_pos.append('N')
-all_pos.append('S')
-all_pos.append('E')
 all_pos.append('W')
+all_pos.append('N')
+all_pos.append('E')
+all_pos.append('S')
+all_pos.append('C')
 
 #Define all state
 all_states=[]
@@ -53,17 +53,17 @@ actions = {
     'W':('STAY', 'RIGHT', 'SHOOT'), 
     'N':('STAY', 'DOWN', 'CRAFT'),
     'E':('STAY', 'LEFT', 'SHOOT', 'HIT'),
-    'S':('UP', 'STAY', 'GATHER'),
-    'C':('STAY', 'UP', 'DOWN', 'RIGHT', 'LEFT', 'SHOOT', 'HIT')
+    'S':('STAY', 'UP', 'GATHER'),
+    'C':('STAY', 'LEFT', 'RIGHT', 'UP', 'DOWN', 'SHOOT', 'HIT')
     }
 
 #Dictionary for integer mapping of pos of IJ
 pos_map = {
-    'C' : 0,
+    'W' : 0,
     'N' : 1,
-    'S' : 2,
-    'E' : 3,
-    'W' : 4
+    'E' : 2,
+    'S' : 3,
+    'C' : 4
 }
 
 #Dictionary for integer mapping of states of MM
@@ -439,6 +439,13 @@ for p in all_pos:
                                                 #     print(pr)
                                             else:
                                                 column.append(0)
+                                            if (col==445):
+                                                if len(column)==153:
+                                                    print('Initial state: ',p,m,arr,s,h)
+                                                    print('\tAction: ',a)
+                                                    print('\t\tFinal state: ',p1,m1,arr1,s1,h1,';\tProb: ',pr)
+                                                    exit()
+                                                    
                         type_col = sum(column)
                         # print(type_col)
                         column[tupletonum(pos_map[p],m,arr,state_map[s],h)] = -type_col
@@ -458,49 +465,27 @@ for p in all_pos:
 # print(A)
 # print(r)
 # r_prev = r
-# for p in all_pos:
-#     for m in range(0,max_mat):
-#         for arr in range(0,max_arrow):
-#             for s in all_states:
-#                 for h in range(0,max_health):
-#                     num_p = pos_map[p]
-#                     num_s = state_map[s]
-#                     val = tupletonum(pos_map[p],m,arr,state_map[s],h)
-#                     # print(val)
-#                     rew = r[val][0]
-#                     # print('Len = ',len(prev_state[num_p][m][arr][num_s][h]))
-#                     for i in range(len(prev_state[num_p][m][arr][num_s][h])):
-#                         j = prev_state[num_p][m][arr][num_s][h][i]
-#                         # print('PREV state: ',j,end='; ')
-#                         # print('\t',i)
-#                         # print('Final state: ',p,m,arr,s,h)
-#                         if j[3] == 'R' and s == 'D' and (j[0] == 'E' or j[0] == 'C') and ((j[4]+1)==h or (j[4]==4 and h==4)) and arr==0 and j[1]==m:
-#                             # print('Initial',r[val][i],end=' ')
-#                             rew -= 40*0.5
-#                             # print('Final', r[val][i])
-#                         # if s == 'R' and s1 == 'D' and (p == 'E' or p == 'C') and ((h+1)==h1 or (h==4 and h1==4)) and arr1==0 and m==m1:
-#                     for i in range(len(r[val])):
-#                         r[val][i] = rew
-
 
 # Opening JSON file
 with open('part_3_output0.json') as json_file:
     data = json.load(json_file)
-cnt = 0
-j = 0
-for i in range(len(r)):
-    for j in range(len(r[i])):
-        print('i=',cnt,'; Our: ',r[i][j],', Their: ',data['r'][cnt])
-        if data['r'][cnt] != r[i][j]:
-            print("NA",numtotuple(i))
-        cnt += 1
+# cnt = 0
+# j = 0
+# for i in range(len(r)):
+#     for j in range(len(r[i])):
+#         print('i=',cnt,'; Our: ',r[i][j],', Their: ',data['r'][cnt])
+#         if data['r'][cnt] != r[i][j]:
+#             print("NA",numtotuple(i))
+#         cnt += 1
         
 r_final = []
 for i in range(len(r)):
     for j in range(len(r[i])):
         r_final.append(r[i][j])
 r = np.array(r_final)
+print(r,'\n',r.shape)
 r.shape = (1,-1)
+print(r,'\n',r.shape)
 
 # for i in r.tolist():
 #     print(i)
@@ -526,9 +511,31 @@ for i in range(A.shape[0]):
             print("DIFF, INI: ",numtotuple(i))
     print()
 A = np.transpose(A)
+ind = []
+for i in range(1936):
+    ind.append(0)
+
+def match_col(i,j):
+    for k in range(600):
+        if abs(A[k][i] - data['a'][k][j]) > 1e-8:
+            print('\t','i=',i,', j=',j,', k=',k,'our: ',A[k][i],'; their: ',data['a'][k][j])
+            return False
+    return True
+
+# for i in range(1936):
+#     for j in range(1936):
+#         if ind[j] == 0 and match_col(i,j):
+#             ind[j] = 1
+#             break
+# for i in range(600):
+#     if ind[i] == 0:
+#         print("different at index ", i)
+#         for j in range(1936):
+#             if abs(A[i][j] - data['a'][i][j]) > 1e-8:
+
 
 alpha = [0 for i in range(0,total_states)]
-alpha[tupletonum(pos_map['W'],0,0,state_map['D'],0)] = 1
+alpha[tupletonum(pos_map['C'],2,3,state_map['R'],4)] = 1
 alpha = np.array(alpha)
 alpha.shape = (total_states,1)
 
@@ -553,6 +560,8 @@ print("r : " + str(r.shape))
 print("A : " + str(A.shape))
 print("x : " + str(x.shape))
 print("alpha : " + str(alpha.shape))
+print('A2 : ',data['a'].shape)
+print('Obj: ',data['objective'])
 
 constraints = [cp.matmul(A, x) == alpha, x>=0]
 objective = cp.Maximize(cp.matmul(r,x))
@@ -560,7 +569,7 @@ problem = cp.Problem(objective, constraints)
 solution = problem.solve()
 
 print(problem.status)
-print(problem.value)
+print(solution)
 
 # for getting values of x
 
